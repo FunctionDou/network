@@ -1,5 +1,5 @@
 /*************************************************************************
-  > File Name: Nagle.c
+  > File Name: split.c
   > Author: Function_Dou
   > Mail: NOT
   > Created Time: 2019年02月07日 星期四 11时15分08秒
@@ -19,11 +19,15 @@
     exit(-1);	\
 }while(0)
 
-// 设置套接字选项
-void Setsockopt(int sockfd, int optname, int buf)
+// 一次性发送一个很大的数据, 大于MTU的值, 该数据会被切分放入不同的分组中
+#define N 100000
+char buf[N];
+
+// 随机产生buf个大小的数据
+void Rand()
 {
-    if(setsockopt(sockfd, IPPROTO_TCP, optname, (const char *)&buf, sizeof(buf)) != 0)
-	EXIT("setsockopt");
+    for(int i = 0; i < N; i++)
+	buf[i] = rand() % 128 + 1;
 }
 
 // socket 
@@ -73,15 +77,11 @@ int service(int port, const char *ser_addr)
     socklen_t client_len = sizeof(client_addr);
     clientfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
 
-    char buf[1024];
     int n;
-    while(1)
-    {
-	n = recv(clientfd, buf, sizeof(buf), 0);
-	if(0 == n)
-	    break;
+    do{
+        n = recv(clientfd, buf, sizeof(buf), 0);
 	send(clientfd, buf, n, 0);
-    }
+    }while(n);
 
     close(clientfd);
     close(sockfd);
@@ -89,25 +89,22 @@ int service(int port, const char *ser_addr)
     return 0;
 }
 
-// 客户端
+// 客户端 : 将数据发送给对端, 默认接收但不输出
 int client(int port, const char *cli_addr)
 {
+    Rand();
     int sockfd;
     sockfd = Socket(0);
-
-    // 设置套接字选项, 关闭Nagle算法
-    Setsockopt(sockfd, TCP_NODELAY, 4);
-
     Connect(sockfd, port, cli_addr);
     
-    char buf[1024];
-    char ch = '0';
-    int n = 1000;
+    // 只发不接
+    send(sockfd, buf, sizeof(buf), 0);
 
-    while(n--)
-	send(sockfd, &ch, 1, 0);
-    n = recv(sockfd, buf, sizeof(buf), 0);
-    write(STDOUT_FILENO, buf, n);
+    int n = 0;
+    do
+    {
+	n = recv(sockfd, buf, sizeof(buf), 0);
+    }while(1);
 
     close(sockfd);
 
