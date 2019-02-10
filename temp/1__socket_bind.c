@@ -1,10 +1,3 @@
-/*************************************************************************
-  > File Name: socket_bind.c
-  > Author: Function_Dou
-  > Mail: NOT
-  > Created Time: 2019年02月07日 星期四 10时02分08秒
- ************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
