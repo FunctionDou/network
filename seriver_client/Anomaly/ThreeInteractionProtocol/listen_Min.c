@@ -5,22 +5,30 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
-#include <netinet/tcp.h>
+#include <errno.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define EXIT(msg) do{	\
     perror(msg); \
     exit(-1);	\
 }while(0)
 
-// 一次性发送一个很大的数据, 大于MTU的值, 该数据会被切分放入不同的分组中
-#define N 100000
-char buf[N];
-
-// 随机产生buf个大小的数据
-void Rand()
+// SIGCHLD的信号处理
+void sighandler(int signo)
 {
-    for(int i = 0; i < N; i++)
-	buf[i] = rand() % 128 + 1;
+    if(signo == SIGCHLD)
+    {
+	pid_t pid;
+	// 一定要死循环
+	while(1)
+	{
+	    // waitpid设置为WNOGANG, 非阻塞
+	    if((pid = waitpid(-1, NULL, WNOHANG)) <= 0)
+		break;
+	    printf("child %d terminated\n", pid);
+	}
+    }
 }
 
 // socket 
@@ -41,7 +49,13 @@ int Bind(int sockfd, int port, const char *addr)
     sockaddr.sin_family = AF_INET;
 
     if(bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) != 0)
+    {
+	if(errno == EADDRINUSE)
+	    fprintf(stderr, "addr %s erro\n", inet_ntoa(sockaddr.sin_addr));
+	else if(errno == EINVAL)
+	    fprintf(stderr, "port %d error\n", ntohs(sockaddr.sin_port));
 	EXIT("bind");
+    }
     return 0;
 }
 
@@ -68,37 +82,64 @@ int service(int port, const char *ser_addr)
 
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
-    clientfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+ 
+    while(1)
+	;
 
+    char buf[1024];
     int n;
-    do{
-        n = recv(clientfd, buf, sizeof(buf), 0);
-	send(clientfd, buf, n, 0);
-    }while(n);
+    pid_t pid;
+    while(1)
+    {
+	clientfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+	// accept被信号打断后重新运行
+	if(clientfd < 0)
+	{
+	    if(errno == EINTR)
+		continue;
+	    else 
+		EXIT("accept");
+	}
 
-    close(clientfd);
+	if((pid = fork()) < 0)
+	    EXIT("fork");
+	else if(0 == pid)
+	{
+	    close(sockfd);
+	    while(1)
+	    {
+		n = recv(clientfd, buf, sizeof(buf), 0);
+		if(0 == n)
+		    break;
+		send(clientfd, buf, n, 0);
+	    }
+	    close(clientfd);
+	    exit(0);
+	}
+	close(clientfd);
+    }
+
     close(sockfd);
 
     return 0;
 }
 
-// 客户端 : 将数据发送给对端, 默认接收但不输出
+// 客户端
 int client(int port, const char *cli_addr)
 {
-    Rand();
     int sockfd;
     sockfd = Socket(0);
     Connect(sockfd, port, cli_addr);
-    
-    // 只发不接
-    send(sockfd, buf, sizeof(buf), 0);
 
-    int n = 0;
-    do
+    char buf[1024];
+    int n;
+    while(1)
     {
+	n = read(STDIN_FILENO, buf, sizeof(buf));
+	send(sockfd, &buf, n, 0);
 	n = recv(sockfd, buf, sizeof(buf), 0);
-    }while(1);
-
+	write(STDOUT_FILENO, buf, n);
+    }
     close(sockfd);
 
     return 0;
@@ -110,8 +151,15 @@ int main(int argc, char *argv[])
     if(argc != 4)
 	exit(-1);
 
-    int i = atoi(argv[1]);
+    struct sigaction action;
+    action.sa_handler = sighandler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
 
+    if(sigaction(SIGCHLD, &action, NULL) != 0)
+	EXIT("sigaction");
+
+    int i = atoi(argv[1]);
     if(i == 1)
 	service(atoi(argv[2]), argv[3]);
     if(2 == i)

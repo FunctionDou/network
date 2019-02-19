@@ -1,10 +1,3 @@
-/*************************************************************************
-  > File Name: recv_send.c
-  > Author: Function_Dou
-  > Mail: NOT
-  > Created Time: 2019年02月07日 星期四 11时15分08秒
- ************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,6 +5,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #define EXIT(msg) do{	\
     perror(msg); \
@@ -39,7 +33,13 @@ int Bind(int sockfd, int port, const char *addr)
     sockaddr.sin_family = AF_INET;
 
     if(bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) != 0)
+    {
+	if(errno == EADDRINUSE)
+	    fprintf(stderr, "addr %s erro\n", inet_ntoa(sockaddr.sin_addr));
+	else if(errno == EINVAL)
+	    fprintf(stderr, "port %d error\n", ntohs(sockaddr.sin_port));
 	EXIT("bind");
+    }
     return 0;
 }
 

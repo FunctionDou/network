@@ -1,10 +1,3 @@
-/*************************************************************************
-  > File Name: inet_network.c
-  > Author: Function_Dou
-  > Mail: NOT
-  > Created Time: 2019年02月02日 星期六 12时12分27秒
- ************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
