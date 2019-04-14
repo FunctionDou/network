@@ -179,6 +179,7 @@ int client(int port, const char *cli_addr)
 	    write(STDOUT_FILENO, buf, n);
 	}
     }
+
     close(sockfd);
 
     return 0;
