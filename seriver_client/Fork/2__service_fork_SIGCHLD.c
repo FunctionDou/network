@@ -137,6 +137,8 @@ int client(int port, const char *cli_addr)
 	    break;
 	send(sockfd, &buf, n, 0);
 	n = recv(sockfd, buf, sizeof(buf), 0);
+	if(n == 0)
+	    break;
 	write(STDOUT_FILENO, buf, n);
     }
     close(sockfd);
