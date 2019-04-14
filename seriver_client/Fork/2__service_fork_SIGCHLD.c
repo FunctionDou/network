@@ -133,6 +133,8 @@ int client(int port, const char *cli_addr)
     while(1)
     {
 	n = read(STDIN_FILENO, buf, sizeof(buf));
+	if(n == 0)
+	    break;
 	send(sockfd, &buf, n, 0);
 	n = recv(sockfd, buf, sizeof(buf), 0);
 	write(STDOUT_FILENO, buf, n);
