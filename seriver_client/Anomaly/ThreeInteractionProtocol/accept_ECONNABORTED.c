@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/wait.h>
 
 #define EXIT(msg) do{	\
@@ -94,8 +95,9 @@ int service(int port, const char *ser_addr)
 	// accept被信号打断后重新运行
 	if(clientfd < 0)
 	{
-	    if(errno == EINTR)
+	    if(errno == EINTR){
 		continue;
+	    }
 	    // 改错误依赖操作系统, 至少我的就没有收到
 	    else if(errno == ECONNABORTED)
 		fprintf(stderr, "peer close\n");
@@ -151,14 +153,13 @@ int main(int argc, char *argv[])
 {
     if(argc != 4)
 	exit(-1);
-
+    
     struct sigaction action;
     action.sa_handler = sighandler;
-    sigemptyset(&action.sa_mask);
     action.sa_flags = 0;
-
+    sigemptyset(&action.sa_mask);
     if(sigaction(SIGCHLD, &action, NULL) != 0)
-	EXIT("sigaction");
+	EXIT("sig_atomict");
 
     int i = atoi(argv[1]);
     if(i == 1)
