@@ -131,7 +131,6 @@ int client(int port, const char *cli_addr)
 {
     int sockfd;
     sockfd = Socket(0);
-    Connect(sockfd, port, cli_addr);
 
     // 设置套接字选项
     struct linger lig;
@@ -140,17 +139,8 @@ int client(int port, const char *cli_addr)
     // 客户端在 close 的时候不是发送 FIN，而是 RST.
     if(setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (void *)&lig, sizeof(lig)) != 0)
 	EXIT("setsockopt");
-
-
-    char buf[1024];
-    int n;
-    while(1)
-    {
-	n = read(STDIN_FILENO, buf, sizeof(buf));
-	send(sockfd, &buf, n, 0);
-	n = recv(sockfd, buf, sizeof(buf), 0);
-	write(STDOUT_FILENO, buf, n);
-    }
+    // 连接后直接关闭
+    Connect(sockfd, port, cli_addr);
     close(sockfd);
 
     return 0;
