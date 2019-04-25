@@ -74,6 +74,8 @@ int Connect(int sockfd, int port, const char *addr)
     return 0;
 }
 
+int count = 0;
+
 // 服务端
 int service(int port, const char *ser_addr)
 {
@@ -99,7 +101,7 @@ int service(int port, const char *ser_addr)
 	    else 
 		EXIT("accept");
 	}
-
+	fprintf(stderr, "count = %d\n", ++count);
 	if((pid = fork()) < 0)
 	    EXIT("fork");
 	else if(0 == pid)
