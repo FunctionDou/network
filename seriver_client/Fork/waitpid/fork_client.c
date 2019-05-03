@@ -59,19 +59,6 @@ int Bind(int sockfd, int port, const char *addr)
     return 0;
 }
 
-// connect
-int Connect(int sockfd, int port, const char *addr)
-{
-    struct sockaddr_in sockaddr;
-    sockaddr.sin_port = htons(port);
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_addr.s_addr = inet_addr(addr);
-
-    if(connect(sockfd, (struct sockaddr *)&sockaddr, sizeof(sockaddr)) != 0)
-	EXIT("connect");
-    return 0;
-}
-
 // 服务端
 int service(int port, const char *ser_addr)
 {
