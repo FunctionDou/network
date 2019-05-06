@@ -56,10 +56,11 @@ int Bind(int sockfd, int port, const char *addr)
 int main(int argc, char *argv[])
 {
     int sockfd;
+    if(argc != 3)
+	exit(1);
     sockfd = Socket(0);
 
-    Bind(sockfd, 8080, "192.168.1.16");
-    Bind(sockfd, 8080, NULL);
+    Bind(sockfd, atoi(argv[2]), argv[1]);
     while(1)
 	;
 
