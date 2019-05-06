@@ -42,8 +42,9 @@ struct httpd{
 	int check_state;	/* 状态机当前状态 */ 
 	int method;			/* 请求方式 */ 
 
-	char filename[FILENAME_LEN];
-	char *url;			/* 目标文件的文件名 */ 
+	char filename[FILENAME_LEN];	/* 文件名 */ 
+	char *url;			/* 目标文件的位置 */ 
+	char *query_string; /* POST 或者是 GET 之后的 ? */ 
 	char *version;		/* http版本号 */ 
 	char *host;			/* 主机名 */ 
 	int content_len;	/* http消息体长度 */ 

@@ -16,6 +16,7 @@ int epollfd;
 int main(int argc, char *argv[]){
 	int listenfd, clientfd;
 	int ret;
+	int reuse;
 	struct sockaddr_in addr;
 	struct threadpool pool;
 
@@ -31,6 +32,9 @@ int main(int argc, char *argv[]){
 		fprintf(stderr, "socket error\n");
 		exit(1);
 	}
+	
+	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+
 	ret = bind(listenfd, (struct sockaddr *)&addr, sizeof(addr));
 	if(ret < 0){
 		fprintf(stderr, "bind error\n");
@@ -69,7 +73,7 @@ int main(int argc, char *argv[]){
 					fprintf(stderr, "accept error\n");
 					continue;
 				}
-				init(&users[clientfd], clientfd, (struct sockaddr *)&addr);
+				inithttpd(&users[clientfd], clientfd, (struct sockaddr *)&addr);
 			}
 			// else if(evs[i].events & (EPOLLHUP | EPOLLIN | EPOLLERR))
 			// 不要把 EPOLLRDHUP 写成 EPOLLHUP. 前者是对端关闭, 后者是文件出错
@@ -79,7 +83,7 @@ int main(int argc, char *argv[]){
 			// readn 将从缓冲区中将 http 请求读入到 httdp 读缓冲区中
 			// append 将事件加入到就绪队列中, 由线程池中的线程处理
 			else if(evs[i].events & EPOLLIN){
-				if(readn(&users[fd]) == 0)
+				if(readn(&users[fd]))
 					append(&pool, &users[fd]);
 				else 
 					close_conn(&users[fd]);
