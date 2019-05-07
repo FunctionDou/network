@@ -189,8 +189,9 @@ int client(int port, const char *cli_addr)
 	{
 	    n = read(sockfd, buf, sizeof(buf));
 	    if(n == 0 && stat == 1){
-		return 0;
+		fprintf(stderr, "peer close\n");
 	    }
+	    break;
 	    write(STDOUT_FILENO, buf, n);
 	}
     }
