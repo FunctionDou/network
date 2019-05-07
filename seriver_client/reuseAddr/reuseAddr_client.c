@@ -49,14 +49,12 @@ void doClient(int service, const char *ip, int port){
 	FD_ZERO(&fds);
 	FD_SET(STDIN_FILENO, &fds);
 	FD_SET(service, &fds);
-	int stat = 0;
 	while(1){
 		tmp = fds;
 		select(service + 1, &tmp, NULL, NULL, NULL);
 		if(FD_ISSET(STDIN_FILENO, &tmp)){
 			n = read(STDIN_FILENO, buf, sizeof(buf));
 			if(n == 0){
-				stat = 1;
 				shutdown(service, SHUT_WR);
 				FD_CLR(STDIN_FILENO, &fds);
 				continue;
@@ -66,8 +64,7 @@ void doClient(int service, const char *ip, int port){
 		if(FD_ISSET(service, &tmp)){
 			n = recv(service, buf, sizeof(buf), 0);
 			if(n == 0){
-				if(stat == 1)
-					break;
+				break;
 			}
 			write(STDOUT_FILENO, buf, n);
 		}

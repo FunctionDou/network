@@ -147,7 +147,6 @@ int client(int port, const char *cli_addr)
     char buf[1024];
     int n;
 
-    int stat = 0;
     fd_set rfds, testrfds;
     FD_ZERO(&rfds);
     FD_SET(STDIN_FILENO, &rfds);
@@ -161,7 +160,6 @@ int client(int port, const char *cli_addr)
 	    n = read(STDIN_FILENO, buf, sizeof(buf));
 	    if(n == 0){
 		shutdown(sockfd, SHUT_WR);
-		stat = 1;
 		FD_CLR(STDIN_FILENO, &rfds);
 		continue;
 	    }
@@ -171,10 +169,7 @@ int client(int port, const char *cli_addr)
 	{
 	    n = recv(sockfd, buf, sizeof(buf), 0);
 	    if(n == 0){
-		if(stat == 1)
-		    break;
-		else
-		    exit(1);
+		break;
 	    }
 	    write(STDOUT_FILENO, buf, n);
 	}
